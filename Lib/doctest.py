@@ -50,6 +50,7 @@ __docformat__ = 'reStructuredText en'
 __all__ = [
     # 0, Option Flags
     'register_optionflag',
+    'ACCEPT_EQUAL_VALUES',
     'DONT_ACCEPT_TRUE_FOR_1',
     'DONT_ACCEPT_BLANKLINE',
     'NORMALIZE_WHITESPACE',
@@ -133,6 +134,7 @@ def register_optionflag(name):
     # Create a new flag unless `name` is already known.
     return OPTIONFLAGS_BY_NAME.setdefault(name, 1 << len(OPTIONFLAGS_BY_NAME))
 
+ACCEPT_EQUAL_VALUES = register_optionflag('ACCEPT_EQUAL_VALUES')
 DONT_ACCEPT_TRUE_FOR_1 = register_optionflag('DONT_ACCEPT_TRUE_FOR_1')
 DONT_ACCEPT_BLANKLINE = register_optionflag('DONT_ACCEPT_BLANKLINE')
 NORMALIZE_WHITESPACE = register_optionflag('NORMALIZE_WHITESPACE')
@@ -140,7 +142,8 @@ ELLIPSIS = register_optionflag('ELLIPSIS')
 SKIP = register_optionflag('SKIP')
 IGNORE_EXCEPTION_DETAIL = register_optionflag('IGNORE_EXCEPTION_DETAIL')
 
-COMPARISON_FLAGS = (DONT_ACCEPT_TRUE_FOR_1 |
+COMPARISON_FLAGS = (ACCEPT_EQUAL_VALUES |
+                    DONT_ACCEPT_TRUE_FOR_1 |
                     DONT_ACCEPT_BLANKLINE |
                     NORMALIZE_WHITESPACE |
                     ELLIPSIS |
@@ -1582,6 +1585,17 @@ class OutputChecker:
         option flags.
         """
 
+        # Accept equal values, as reconstructed from the string
+        # representations, if enabled.
+        if optionflags & ACCEPT_EQUAL_VALUES:
+            try:
+                got_val = eval(got)
+                want_val = eval(want)
+                if got_val == want_val:
+                    return True
+            except:
+                pass
+
         # If `want` contains hex-escaped character such as "\u1234",
         # then `want` is a string of six characters(e.g. [\,u,1,2,3,4]).
         # On the other hand, `got` could be another sequence of
@@ -1898,6 +1912,7 @@ def testmod(m=None, name=None, globs=None, verbose=None,
     and defaults to 0.  This is new in 2.3.  Possible values (see the
     docs for details):
 
+        ACCEPT_EQUAL_VALUES
         DONT_ACCEPT_TRUE_FOR_1
         DONT_ACCEPT_BLANKLINE
         NORMALIZE_WHITESPACE
@@ -2010,6 +2025,7 @@ def testfile(filename, module_relative=True, name=None, package=None,
     Optional keyword arg "optionflags" or's together module constants,
     and defaults to 0.  Possible values (see the docs for details):
 
+        ACCEPT_EQUAL_VALUES
         DONT_ACCEPT_TRUE_FOR_1
         DONT_ACCEPT_BLANKLINE
         NORMALIZE_WHITESPACE
